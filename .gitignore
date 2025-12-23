@@ -81,9 +81,9 @@ storybook-static
 tmp/
 temp/
 
-# Video files (uncomment if you don't want to commit large video files)
-# public/videos/*.mp4
-# public/videos/*.mov
-# public/videos/*.webm
-# !public/videos/.gitkeep
+# Video files
+public/videos/*.mp4
+public/videos/*.mov
+public/videos/*.webm
+!public/videos/.gitkeep
 
