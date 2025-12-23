@@ -26,6 +26,7 @@ export default function App() {
   
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
+  const sceneRef = useRef<HTMLDivElement | null>(null);
   const dragStartRef = useRef<{ x: number; y?: number; initialVal?: number; initialCamera?: { panX: number; panY: number; rotateX: number; rotateY: number } }>({ x: 0, y: 0, initialVal: 0, initialCamera: { ...camera } });
 
   const togglePlay = (e) => {
@@ -47,6 +48,8 @@ export default function App() {
 
   const handleBookPointerDown = (e) => {
     if (e.target.closest('button')) return;
+    // Don't capture if touching the video/iframe area when card is fully open
+    if (bookRotation >= 180 && (e.target.closest('iframe') || e.target.closest('video'))) return;
     e.preventDefault();
     e.stopPropagation(); 
     setIsBookDragging(true);
@@ -100,7 +103,7 @@ export default function App() {
         rotateY: 0 
       } 
     };
-    e.target.setPointerCapture(e.pointerId);
+    sceneRef.current?.setPointerCapture(e.pointerId);
   };
 
   const handleScenePointerMove = (e) => {
@@ -119,7 +122,7 @@ export default function App() {
 
   const handleScenePointerUp = (e) => {
     setIsSceneDragging(false);
-    e.target.releasePointerCapture(e.pointerId);
+    sceneRef.current?.releasePointerCapture(e.pointerId);
   };
 
   const renderCardStack = (type) => {
@@ -320,7 +323,8 @@ export default function App() {
   React.useEffect(() => {
     if (!isSceneDragging && !isBookDragging) {
       const rotationProgress = bookRotation / 180;
-      const targetPanX = rotationProgress * 80;
+      // Pan by half the card width (~225px) to center the spine when fully open
+      const targetPanX = rotationProgress * 225;
       
       baseCameraPan.current = {
         panX: targetPanX
@@ -337,7 +341,9 @@ export default function App() {
 
   return (
     <div 
+      ref={sceneRef}
       className="min-h-screen bg-[#f0eee6] flex items-center justify-center p-4 font-serif selection:bg-rose-200 cursor-move"
+      style={{ touchAction: 'none' }}
       onPointerDown={isEditing ? undefined : handleScenePointerDown}
       onPointerMove={isEditing ? undefined : handleScenePointerMove}
       onPointerUp={isEditing ? undefined : handleScenePointerUp}
@@ -417,7 +423,7 @@ export default function App() {
                 zIndex: 100,
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden',
-                touchAction: 'none'
+                touchAction: bookRotation >= 180 ? 'auto' : 'none'
               }}
             >
                {renderCardStack('cover')}
