@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Heart, Play, Volume2, VolumeX, Edit2, Plus, Trash2, X } from 'lucide-react';
+import { Heart, Play, Volume2, VolumeX, Edit2, Plus, Trash2 } from 'lucide-react';
 import './index.css';
 import { CONTENT } from './content';
 
@@ -175,8 +175,14 @@ export default function App() {
             )}
             
             {type === 'cover' && isBack && (
-               <div className="absolute inset-0 bg-[#e8e4dc] rounded-r-lg flex flex-col items-center justify-center border border-[#d6d3cb] overflow-hidden" style={{ transform: 'rotateY(180deg)', pointerEvents: 'auto' }}>
-                  <div className="relative w-[92%] h-[92%] bg-black shadow-inner rounded overflow-hidden border-2 border-stone-400/20" style={{ pointerEvents: 'auto' }}>
+               <div className="absolute inset-0 bg-[#e8e4dc] rounded-r-lg flex flex-col items-center justify-center border border-[#d6d3cb] overflow-hidden" style={{ transform: 'rotateY(180deg)' }}>
+                  <div 
+                    className="relative w-[92%] h-[92%] bg-black shadow-inner rounded overflow-hidden border-2 border-stone-400/20"
+                    style={{ pointerEvents: bookRotation >= 180 ? 'auto' : 'none' }}
+                    onPointerDown={(e) => { if (bookRotation >= 180) e.stopPropagation(); }}
+                    onPointerMove={(e) => { if (bookRotation >= 180) e.stopPropagation(); }}
+                    onPointerUp={(e) => { if (bookRotation >= 180) e.stopPropagation(); }}
+                  >
                      {isYouTubeUrl(displayContent.videoUrl) ? (() => {
                         const embedUrl = getYouTubeEmbedUrl(displayContent.videoUrl);
                         const videoId = embedUrl.match(/embed\/([a-zA-Z0-9_-]+)/)?.[1] || '';
@@ -186,6 +192,7 @@ export default function App() {
                             key={shouldAutoplay ? 'playing' : 'paused'}
                             src={`${embedUrl}?${shouldAutoplay ? 'autoplay=1&' : ''}loop=1&playlist=${videoId}&mute=0&controls=1`}
                             className="w-full h-full"
+                            style={{ pointerEvents: bookRotation >= 180 ? 'auto' : 'none' }}
                             allow="autoplay; encrypted-media"
                             allowFullScreen
                           />
@@ -372,15 +379,6 @@ export default function App() {
         <Edit2 size={20} />
       </button>
 
-      {bookRotation >= 180 && (
-        <button
-          onClick={() => setBookRotation(0)}
-          className="fixed top-4 left-4 z-50 p-3 bg-white/90 hover:bg-white backdrop-blur-md rounded-full shadow-lg border border-stone-200 text-stone-700 hover:text-stone-900 transition-all animate-fade-in"
-          title="Close Card"
-        >
-          <X size={20} />
-        </button>
-      )}
 
 
       <style>{`
@@ -431,18 +429,15 @@ export default function App() {
             <div 
               ref={cardRef}
               className={`absolute inset-0 transform-style-3d cursor-grab active:cursor-grabbing origin-left ${!isBookDragging && bookRotation === 0 ? 'animate-hint' : ''}`}
-              onPointerDown={bookRotation >= 180 ? undefined : handleBookPointerDown}
-              onPointerMove={bookRotation >= 180 ? undefined : handleBookPointerMove}
-              onPointerUp={bookRotation >= 180 ? undefined : handleBookPointerUp}
-              onPointerLeave={bookRotation >= 180 ? undefined : handleBookPointerUp}
+              onPointerDown={handleBookPointerDown}
+              onPointerMove={handleBookPointerMove}
+              onPointerUp={handleBookPointerUp}
+              onPointerLeave={handleBookPointerUp}
               style={{
                 transform: `rotateY(-${bookRotation}deg)`,
                 transition: isBookDragging ? 'none' : 'transform 0.8s cubic-bezier(0.25, 0.8, 0.25, 1)',
                 zIndex: 100,
-                backfaceVisibility: 'hidden',
-                WebkitBackfaceVisibility: 'hidden',
-                touchAction: bookRotation >= 180 ? 'auto' : 'none',
-                pointerEvents: bookRotation >= 180 ? 'none' : 'auto'
+                touchAction: 'none'
               }}
             >
                {renderCardStack('cover')}
