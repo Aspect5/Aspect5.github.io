@@ -273,7 +273,7 @@ export default function App() {
 
   return (
     <div 
-      className="min-h-screen bg-[#f0eee6] flex items-center justify-center p-4 overflow-hidden font-serif selection:bg-rose-200 cursor-move"
+      className="min-h-screen bg-[#f0eee6] flex items-center justify-center p-4 font-serif selection:bg-rose-200 cursor-move"
       onPointerDown={isEditing ? undefined : handleScenePointerDown}
       onPointerMove={isEditing ? undefined : handleScenePointerMove}
       onPointerUp={isEditing ? undefined : handleScenePointerUp}
@@ -305,7 +305,7 @@ export default function App() {
         .animate-hint { animation: hint-nudge 3s ease-in-out infinite; }
       `}</style>
 
-      <div className="scene relative w-full max-w-[450px] h-[600px] z-10 items-center justify-center select-none mx-auto flex px-4">
+      <div className="scene relative w-full max-w-[450px] h-[600px] min-h-[400px] z-10 items-center justify-center select-none mx-auto flex px-4" style={{ maxWidth: 'min(450px, 90vw)', height: 'min(600px, 80vh)' }}>
         
         <div className="relative w-full h-full transform-style-3d transition-transform duration-75 ease-out"
            style={{ transform: `translateX(${camera.panX}px) translateY(${camera.panY}px) rotateX(${camera.rotateX}deg) rotateY(${camera.rotateY}deg)` }}
