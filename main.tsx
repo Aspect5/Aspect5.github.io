@@ -6,7 +6,7 @@ import { CONTENT } from './content';
 
 export default function App() {
   const [bookRotation, setBookRotation] = useState(0);
-  const [camera, setCamera] = useState({ panX: 0, panY: 0, rotateX: 20, rotateY: 0 });
+  const [camera, setCamera] = useState({ panX: 0, panY: 0, rotateX: 0, rotateY: 0 });
   
   const [isBookDragging, setIsBookDragging] = useState(false);
   const [isSceneDragging, setIsSceneDragging] = useState(false);
@@ -15,6 +15,7 @@ export default function App() {
   const [isMuted, setIsMuted] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isPortrait, setIsPortrait] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [editedContent, setEditedContent] = useState(() => {
     const content = { ...CONTENT };
     if (!content.body || !Array.isArray(content.body)) {
@@ -106,7 +107,7 @@ export default function App() {
     e.preventDefault();
     const deltaX = e.clientX - dragStartRef.current.x;
     const deltaY = e.clientY - (dragStartRef.current.y ?? 0);
-    const initialCamera = dragStartRef.current.initialCamera ?? { panX: 0, panY: 0, rotateX: 20, rotateY: 0 };
+    const initialCamera = dragStartRef.current.initialCamera ?? { panX: 0, panY: 0, rotateX: 0, rotateY: 0 };
     setCamera(prev => ({ 
       ...prev, 
       panX: baseCameraPan.current.panX + deltaX * 0.5, 
@@ -284,14 +285,34 @@ export default function App() {
 
   React.useEffect(() => {
     const checkOrientation = () => {
-      setIsPortrait(window.innerHeight > window.innerWidth);
+      const isPortraitMode = window.innerHeight > window.innerWidth || 
+                            (window.screen && window.screen.orientation && 
+                             (window.screen.orientation.angle === 90 || window.screen.orientation.angle === 270));
+      setIsPortrait(isPortraitMode);
+      setIsMobile(window.innerWidth < 768);
     };
+    
     checkOrientation();
+    const timeoutId = setTimeout(checkOrientation, 100);
+    
     window.addEventListener('resize', checkOrientation);
-    window.addEventListener('orientationchange', checkOrientation);
+    window.addEventListener('orientationchange', () => {
+      setTimeout(checkOrientation, 100);
+    });
+    
+    if (window.screen && window.screen.orientation) {
+      window.screen.orientation.addEventListener('change', () => {
+        setTimeout(checkOrientation, 100);
+      });
+    }
+    
     return () => {
+      clearTimeout(timeoutId);
       window.removeEventListener('resize', checkOrientation);
       window.removeEventListener('orientationchange', checkOrientation);
+      if (window.screen && window.screen.orientation) {
+        window.screen.orientation.removeEventListener('change', checkOrientation);
+      }
     };
   }, []);
 
@@ -300,7 +321,7 @@ export default function App() {
   React.useEffect(() => {
     if (!isSceneDragging && !isBookDragging) {
       const rotationProgress = bookRotation / 180;
-      const targetPanX = rotationProgress * 100;
+      const targetPanX = rotationProgress * 80;
       
       baseCameraPan.current = {
         panX: targetPanX
@@ -309,7 +330,8 @@ export default function App() {
       setCamera(prev => ({
         ...prev,
         panX: baseCameraPan.current.panX,
-        rotateY: 0
+        rotateY: 0,
+        rotateX: 0
       }));
     }
   }, [bookRotation, isSceneDragging, isBookDragging]);
@@ -362,7 +384,7 @@ export default function App() {
       <div className={`scene relative w-full max-w-[450px] h-[600px] min-h-[400px] z-10 items-center justify-center select-none mx-auto flex px-4 ${isPortrait ? 'opacity-0 pointer-events-none' : ''}`} style={{ 
         maxWidth: 'min(450px, 90vw)', 
         height: 'min(600px, 80vh)',
-        transform: 'scale(0.85)',
+        transform: isMobile ? 'scale(0.65)' : 'scale(0.85)',
         transition: 'transform 0.3s ease-out, opacity 0.3s'
       }}>
         
