@@ -87,7 +87,16 @@ export default function App() {
   const handleScenePointerDown = (e) => {
     e.preventDefault();
     setIsSceneDragging(true);
-    dragStartRef.current = { x: e.clientX, y: e.clientY, initialCamera: { ...camera } };
+    dragStartRef.current = { 
+      x: e.clientX, 
+      y: e.clientY, 
+      initialCamera: { 
+        panX: baseCameraPan.current.panX, 
+        panY: camera.panY, 
+        rotateX: camera.rotateX, 
+        rotateY: baseCameraPan.current.rotateY 
+      } 
+    };
     e.target.setPointerCapture(e.pointerId);
   };
 
@@ -99,8 +108,9 @@ export default function App() {
     const initialCamera = dragStartRef.current.initialCamera ?? { panX: 0, panY: 0, rotateX: 20, rotateY: 0 };
     setCamera(prev => ({ 
       ...prev, 
-      panX: initialCamera.panX + deltaX, 
-      panY: initialCamera.panY + deltaY 
+      panX: baseCameraPan.current.panX + deltaX * 0.5, 
+      panY: initialCamera.panY + deltaY * 0.5,
+      rotateY: baseCameraPan.current.rotateY
     }));
   };
 
@@ -271,6 +281,27 @@ export default function App() {
     }
   }, []);
 
+  const baseCameraPan = React.useRef({ panX: 0, rotateY: 0 });
+  
+  React.useEffect(() => {
+    if (!isSceneDragging && !isBookDragging) {
+      const rotationProgress = bookRotation / 180;
+      const targetPanX = rotationProgress * 120;
+      const targetRotateY = rotationProgress * -12;
+      
+      baseCameraPan.current = {
+        panX: targetPanX,
+        rotateY: targetRotateY
+      };
+      
+      setCamera(prev => ({
+        ...prev,
+        panX: baseCameraPan.current.panX,
+        rotateY: baseCameraPan.current.rotateY
+      }));
+    }
+  }, [bookRotation, isSceneDragging, isBookDragging]);
+
   return (
     <div 
       className="min-h-screen bg-[#f0eee6] flex items-center justify-center p-4 font-serif selection:bg-rose-200 cursor-move"
@@ -307,7 +338,7 @@ export default function App() {
 
       <div className="scene relative w-full max-w-[450px] h-[600px] min-h-[400px] z-10 items-center justify-center select-none mx-auto flex px-4" style={{ maxWidth: 'min(450px, 90vw)', height: 'min(600px, 80vh)' }}>
         
-        <div className="relative w-full h-full transform-style-3d transition-transform duration-75 ease-out"
+        <div className="relative w-full h-full transform-style-3d transition-transform duration-300 ease-out"
            style={{ transform: `translateX(${camera.panX}px) translateY(${camera.panY}px) rotateX(${camera.rotateX}deg) rotateY(${camera.rotateY}deg)` }}
         >
           
