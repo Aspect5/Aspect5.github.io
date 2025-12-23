@@ -68,7 +68,7 @@ export default function App() {
     requestFullscreen();
     setIsBookDragging(true);
     dragStartRef.current = { x: e.clientX, initialVal: bookRotation };
-    cardRef.current?.setPointerCapture(e.pointerId);
+    (e.currentTarget as HTMLElement)?.setPointerCapture(e.pointerId);
   };
 
   const handleBookPointerMove = (e) => {
@@ -84,7 +84,7 @@ export default function App() {
   const handleBookPointerUp = (e) => {
     if (!isBookDragging) return;
     setIsBookDragging(false);
-    cardRef.current?.releasePointerCapture(e.pointerId);
+    try { (e.currentTarget as HTMLElement)?.releasePointerCapture(e.pointerId); } catch {}
     if (bookRotation > 40) {
       setBookRotation(180);
         if (isYouTubeUrl(displayContent.videoUrl)) {
@@ -175,7 +175,14 @@ export default function App() {
             )}
             
             {type === 'cover' && isBack && (
-               <div className="absolute inset-0 bg-[#e8e4dc] rounded-r-lg flex flex-col items-center justify-center border border-[#d6d3cb] overflow-hidden" style={{ transform: 'rotateY(180deg)' }}>
+               <div 
+                 className="absolute inset-0 bg-[#e8e4dc] rounded-r-lg flex flex-col items-center justify-center border border-[#d6d3cb] overflow-hidden" 
+                 style={{ transform: 'rotateY(180deg)', touchAction: 'none' }}
+                 onPointerDown={handleBookPointerDown}
+                 onPointerMove={handleBookPointerMove}
+                 onPointerUp={handleBookPointerUp}
+                 onPointerLeave={handleBookPointerUp}
+               >
                   <div 
                     className="relative w-[92%] h-[92%] bg-black shadow-inner rounded overflow-hidden border-2 border-stone-400/20"
                     style={{ pointerEvents: bookRotation >= 180 ? 'auto' : 'none' }}
@@ -362,13 +369,7 @@ export default function App() {
 
   return (
     <div 
-      ref={sceneRef}
-      className="min-h-screen bg-[#f0eee6] flex items-center justify-center p-4 font-serif selection:bg-rose-200 cursor-move"
-      style={{ touchAction: 'none' }}
-      onPointerDown={isEditing ? undefined : handleScenePointerDown}
-      onPointerMove={isEditing ? undefined : handleScenePointerMove}
-      onPointerUp={isEditing ? undefined : handleScenePointerUp}
-      onPointerLeave={isEditing ? undefined : handleScenePointerUp}
+      className="min-h-screen bg-[#f0eee6] flex items-center justify-center p-4 font-serif selection:bg-rose-200"
     >
       
       <button
@@ -410,7 +411,7 @@ export default function App() {
       }}>
         
         <div className="relative w-full h-full transform-style-3d transition-transform duration-300 ease-out"
-           style={{ transform: `translateX(${camera.panX}px) translateY(${camera.panY}px) rotateX(${camera.rotateX}deg) rotateY(${camera.rotateY}deg)` }}
+           style={{ transform: `translateX(${camera.panX}px)` }}
         >
           
           <div className="absolute bottom-0 left-1/2 transform-style-3d pointer-events-none"
