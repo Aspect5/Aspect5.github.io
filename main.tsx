@@ -224,7 +224,6 @@ export default function App() {
     return layers;
   };
 
-  const [mobileOpen, setMobileOpen] = useState(false);
 
   const displayContent = isEditing ? editedContent : CONTENT;
 
@@ -289,8 +288,11 @@ export default function App() {
         <Edit2 size={20} />
       </button>
 
-      <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-50 mix-blend-multiply bg-white/40 px-4 py-2 rounded-full text-xs font-semibold tracking-widest text-stone-600">
+      <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-50 mix-blend-multiply bg-white/40 px-4 py-2 rounded-full text-xs font-semibold tracking-widest text-stone-600 hidden sm:block">
         DRAG BACKGROUND TO MOVE • DRAG CARD TO OPEN
+      </div>
+      <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-50 mix-blend-multiply bg-white/40 px-4 py-2 rounded-full text-xs font-semibold tracking-widest text-stone-600 block sm:hidden">
+        DRAG CARD TO OPEN
       </div>
 
       <style>{`
@@ -303,14 +305,14 @@ export default function App() {
         .animate-hint { animation: hint-nudge 3s ease-in-out infinite; }
       `}</style>
 
-      <div className="hidden md:flex scene relative w-[450px] h-[600px] z-10 items-center justify-center select-none">
+      <div className="scene relative w-full max-w-[450px] h-[600px] z-10 items-center justify-center select-none mx-auto flex px-4">
         
         <div className="relative w-full h-full transform-style-3d transition-transform duration-75 ease-out"
            style={{ transform: `translateX(${camera.panX}px) translateY(${camera.panY}px) rotateX(${camera.rotateX}deg) rotateY(${camera.rotateY}deg)` }}
         >
           
           <div className="absolute bottom-0 left-1/2 transform-style-3d pointer-events-none"
-             style={{ width: '450px', height: '40px', transform: `translateX(-50%) translateY(200px) rotateX(90deg) translateZ(-50px)`, zIndex: -1 }}
+             style={{ width: 'min(450px, 90vw)', height: '40px', transform: `translateX(-50%) translateY(200px) rotateX(90deg) translateZ(-50px)`, zIndex: -1 }}
           >
               <div className="w-full h-full bg-black/20 blur-2xl rounded-[50%] transition-all duration-500 ease-out"
                 style={{ transform: `scaleX(${1 + (bookRotation/180)}) translateX(${-bookRotation/4}px)`, opacity: 0.4 + (bookRotation/600) }}
@@ -341,49 +343,6 @@ export default function App() {
         </div>
       </div>
 
-      <div className="md:hidden w-full max-w-md mx-auto flex flex-col gap-4">
-        {!mobileOpen ? (
-          <div onClick={() => setMobileOpen(true)} className="bg-[#e8e4dc] aspect-[3/4] rounded-lg shadow-xl flex flex-col items-center justify-center p-8 text-center border border-[#d6d3cb]">
-             <div className="w-20 h-20 bg-rose-900/10 rounded-full flex items-center justify-center mb-6 text-rose-900">
-                <Heart size={32} strokeWidth={1} fill="currentColor" className="opacity-80" />
-             </div>
-             <h1 className="handwritten text-5xl text-stone-800 mb-2">{displayContent.title}</h1>
-             <p className="handwritten text-2xl text-stone-600 mb-6">{displayContent.subtitle}</p>
-             <p className="body-text text-stone-500 uppercase tracking-widest text-xs mt-8 animate-pulse">Tap to open</p>
-          </div>
-        ) : (
-          <div className="animate-in fade-in slide-in-from-bottom-8 duration-1000 flex flex-col gap-4">
-            <div className="rounded-lg overflow-hidden shadow-lg bg-black aspect-video relative">
-               {isYouTubeUrl(displayContent.videoUrl) ? (() => {
-                  const embedUrl = getYouTubeEmbedUrl(displayContent.videoUrl);
-                  const videoId = embedUrl.match(/embed\/([a-zA-Z0-9_-]+)/)?.[1] || '';
-                  return (
-                    <iframe
-                      src={`${embedUrl}?autoplay=1&loop=1&playlist=${videoId}&mute=0&controls=1`}
-                      className="w-full h-full"
-                      allow="autoplay; encrypted-media"
-                      allowFullScreen
-                    />
-                  );
-               })() : (
-                  <video className="w-full h-full object-cover" autoPlay loop playsInline src={displayContent.videoUrl} />
-               )}
-            </div>
-            <div className="bg-[#fffdf9] p-6 rounded-lg shadow-lg border border-stone-100">
-               <p className="body-text text-xl leading-relaxed text-stone-800 mb-4">{displayContent.greeting}</p>
-               {(displayContent.body || []).map((paragraph, index) => (
-                 <p 
-                   key={index} 
-                   className="body-text text-base leading-relaxed text-stone-600 mb-4"
-                   dangerouslySetInnerHTML={{ __html: paragraph }}
-                 />
-               ))}
-               <p className="handwritten text-3xl text-stone-800 mt-8 text-right">{displayContent.signOff}<br/>{displayContent.signature}</p>
-            </div>
-            <button onClick={() => setMobileOpen(false)} className="text-stone-400 text-sm py-4 uppercase tracking-widest">Close Card</button>
-          </div>
-        )}
-      </div>
 
       {isEditing && (
         <div 
