@@ -25,6 +25,7 @@ export default function App() {
   });
   
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const cardRef = useRef<HTMLDivElement | null>(null);
   const dragStartRef = useRef<{ x: number; y?: number; initialVal?: number; initialCamera?: { panX: number; panY: number; rotateX: number; rotateY: number } }>({ x: 0, y: 0, initialVal: 0, initialCamera: { ...camera } });
 
   const togglePlay = (e) => {
@@ -50,7 +51,7 @@ export default function App() {
     e.stopPropagation(); 
     setIsBookDragging(true);
     dragStartRef.current = { x: e.clientX, initialVal: bookRotation };
-    e.target.setPointerCapture(e.pointerId);
+    cardRef.current?.setPointerCapture(e.pointerId);
   };
 
   const handleBookPointerMove = (e) => {
@@ -66,7 +67,7 @@ export default function App() {
   const handleBookPointerUp = (e) => {
     if (!isBookDragging) return;
     setIsBookDragging(false);
-    e.target.releasePointerCapture(e.pointerId);
+    cardRef.current?.releasePointerCapture(e.pointerId);
     if (bookRotation > 40) {
       setBookRotation(180);
         if (isYouTubeUrl(displayContent.videoUrl)) {
@@ -285,9 +286,7 @@ export default function App() {
 
   React.useEffect(() => {
     const checkOrientation = () => {
-      const isPortraitMode = window.innerHeight > window.innerWidth || 
-                            (window.screen && window.screen.orientation && 
-                             (window.screen.orientation.angle === 90 || window.screen.orientation.angle === 270));
+      const isPortraitMode = window.matchMedia("(orientation: portrait)").matches;
       setIsPortrait(isPortraitMode);
       setIsMobile(window.innerWidth < 768);
     };
@@ -375,7 +374,7 @@ export default function App() {
           <div className="max-w-md">
             <div className="text-6xl mb-6 animate-spin" style={{ animationDuration: '2s', animationIterationCount: 'infinite' }}>📱</div>
             <h2 className="handwritten text-4xl text-stone-800 mb-4">Please Rotate Your Device</h2>
-            <p className="body-text text-lg text-stone-600 mb-2">This experience works best in landscape mode</p>
+            <p className="body-text text-lg text-stone-600 mb-2">You're going to want to see this in landscape mode</p>
             <p className="body-text text-sm text-stone-500">Rotate your phone sideways to continue</p>
           </div>
         </div>
@@ -406,6 +405,7 @@ export default function App() {
             </div>
 
             <div 
+              ref={cardRef}
               className={`absolute inset-0 transform-style-3d cursor-grab active:cursor-grabbing origin-left ${!isBookDragging && bookRotation === 0 ? 'animate-hint' : ''}`}
               onPointerDown={handleBookPointerDown}
               onPointerMove={handleBookPointerMove}
@@ -416,7 +416,8 @@ export default function App() {
                 transition: isBookDragging ? 'none' : 'transform 0.8s cubic-bezier(0.25, 0.8, 0.25, 1)',
                 zIndex: 100,
                 backfaceVisibility: 'hidden',
-                WebkitBackfaceVisibility: 'hidden'
+                WebkitBackfaceVisibility: 'hidden',
+                touchAction: 'none'
               }}
             >
                {renderCardStack('cover')}
