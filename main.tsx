@@ -199,7 +199,7 @@ export default function App() {
 
 
             {type === 'letter' && isFront && (
-               <div className="absolute inset-0 bg-[#fffdf9] rounded-r-lg flex flex-col p-8 border border-stone-200">
+               <div className="absolute inset-0 bg-[#fffdf9] rounded-r-lg flex flex-col p-8 border border-stone-200" style={{ opacity: bookRotation > 10 ? 1 : 0, visibility: bookRotation > 10 ? 'visible' : 'hidden', transition: 'opacity 0.3s, visibility 0.1s' }}>
                   <div className="absolute inset-0 opacity-40 bg-[url('https://www.transparenttextures.com/patterns/cardboard.png')] pointer-events-none mix-blend-multiply" />
                   <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-stone-900/10 to-transparent pointer-events-none z-10 mix-blend-multiply" />
                   <div className="absolute inset-0 pointer-events-none transition-opacity duration-100 rounded-r-lg z-10"
@@ -328,8 +328,8 @@ export default function App() {
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&display=swap');
-        .scene { perspective: 2000px; }
-        .transform-style-3d { transform-style: preserve-3d; }
+        .scene { perspective: 2000px; -webkit-perspective: 2000px; }
+        .transform-style-3d { transform-style: preserve-3d; -webkit-transform-style: preserve-3d; }
         .handwritten { font-family: 'Great Vibes', cursive; }
         .body-text { font-family: 'Cormorant Garamond', serif; }
         @keyframes hint-nudge { 0%, 100% { transform: rotateY(0deg); } 50% { transform: rotateY(-6deg); } }
@@ -351,7 +351,7 @@ export default function App() {
           </div>
 
           <div className="relative w-full h-full transform-style-3d">
-            <div className="absolute inset-0 transform-style-3d origin-left" style={{ transform: 'translateZ(-6px)' }}>
+            <div className="absolute inset-0 transform-style-3d origin-left" style={{ transform: 'translateZ(-6px)', zIndex: 1 }}>
                {renderCardStack('letter')}
             </div>
 
@@ -364,7 +364,9 @@ export default function App() {
               style={{
                 transform: `rotateY(-${bookRotation}deg)`,
                 transition: isBookDragging ? 'none' : 'transform 0.8s cubic-bezier(0.25, 0.8, 0.25, 1)',
-                zIndex: 100
+                zIndex: 100,
+                backfaceVisibility: 'hidden',
+                WebkitBackfaceVisibility: 'hidden'
               }}
             >
                {renderCardStack('cover')}
