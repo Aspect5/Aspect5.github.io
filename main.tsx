@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Heart, Play, Volume2, VolumeX, Edit2, Plus, Trash2 } from 'lucide-react';
+import { Heart, Play, Volume2, VolumeX, Edit2, Plus, Trash2, X } from 'lucide-react';
 import './index.css';
 import { CONTENT } from './content';
 
@@ -28,6 +28,19 @@ export default function App() {
   const cardRef = useRef<HTMLDivElement | null>(null);
   const sceneRef = useRef<HTMLDivElement | null>(null);
   const dragStartRef = useRef<{ x: number; y?: number; initialVal?: number; initialCamera?: { panX: number; panY: number; rotateX: number; rotateY: number } }>({ x: 0, y: 0, initialVal: 0, initialCamera: { ...camera } });
+  const hasRequestedFullscreen = useRef(false);
+
+  const requestFullscreen = () => {
+    if (hasRequestedFullscreen.current || !isMobile) return;
+    hasRequestedFullscreen.current = true;
+    
+    const elem = document.documentElement;
+    if (elem.requestFullscreen) {
+      elem.requestFullscreen().catch(() => {});
+    } else if ((elem as any).webkitRequestFullscreen) {
+      (elem as any).webkitRequestFullscreen();
+    }
+  };
 
   const togglePlay = (e) => {
     e.stopPropagation();
@@ -51,7 +64,8 @@ export default function App() {
     // Don't capture if touching the video/iframe area when card is fully open
     if (bookRotation >= 180 && (e.target.closest('iframe') || e.target.closest('video'))) return;
     e.preventDefault();
-    e.stopPropagation(); 
+    e.stopPropagation();
+    requestFullscreen();
     setIsBookDragging(true);
     dragStartRef.current = { x: e.clientX, initialVal: bookRotation };
     cardRef.current?.setPointerCapture(e.pointerId);
@@ -161,8 +175,8 @@ export default function App() {
             )}
             
             {type === 'cover' && isBack && (
-               <div className="absolute inset-0 bg-[#e8e4dc] rounded-r-lg flex flex-col items-center justify-center border border-[#d6d3cb] overflow-hidden" style={{ transform: 'rotateY(180deg)' }}>
-                  <div className="relative w-[92%] h-[92%] bg-black shadow-inner rounded overflow-hidden border-2 border-stone-400/20">
+               <div className="absolute inset-0 bg-[#e8e4dc] rounded-r-lg flex flex-col items-center justify-center border border-[#d6d3cb] overflow-hidden" style={{ transform: 'rotateY(180deg)', pointerEvents: 'auto' }}>
+                  <div className="relative w-[92%] h-[92%] bg-black shadow-inner rounded overflow-hidden border-2 border-stone-400/20" style={{ pointerEvents: 'auto' }}>
                      {isYouTubeUrl(displayContent.videoUrl) ? (() => {
                         const embedUrl = getYouTubeEmbedUrl(displayContent.videoUrl);
                         const videoId = embedUrl.match(/embed\/([a-zA-Z0-9_-]+)/)?.[1] || '';
@@ -358,12 +372,16 @@ export default function App() {
         <Edit2 size={20} />
       </button>
 
-      <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-50 mix-blend-multiply bg-white/40 px-4 py-2 rounded-full text-xs font-semibold tracking-widest text-stone-600 hidden sm:block">
-        DRAG BACKGROUND TO MOVE • DRAG CARD TO OPEN
-      </div>
-      <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-50 mix-blend-multiply bg-white/40 px-4 py-2 rounded-full text-xs font-semibold tracking-widest text-stone-600 block sm:hidden">
-        DRAG CARD TO OPEN
-      </div>
+      {bookRotation >= 180 && (
+        <button
+          onClick={() => setBookRotation(0)}
+          className="fixed top-4 left-4 z-50 p-3 bg-white/90 hover:bg-white backdrop-blur-md rounded-full shadow-lg border border-stone-200 text-stone-700 hover:text-stone-900 transition-all animate-fade-in"
+          title="Close Card"
+        >
+          <X size={20} />
+        </button>
+      )}
+
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&display=swap');
@@ -389,7 +407,7 @@ export default function App() {
       <div className={`scene relative w-full max-w-[450px] h-[600px] min-h-[400px] z-10 items-center justify-center select-none mx-auto flex px-4 ${isPortrait ? 'opacity-0 pointer-events-none' : ''}`} style={{ 
         maxWidth: 'min(450px, 90vw)', 
         height: 'min(600px, 80vh)',
-        transform: isMobile ? 'scale(0.65)' : 'scale(0.85)',
+        transform: `scale(${isMobile ? 0.65 + (bookRotation / 180) * 0.25 : 0.85 + (bookRotation / 180) * 0.2})`,
         transition: 'transform 0.3s ease-out, opacity 0.3s'
       }}>
         
@@ -413,17 +431,18 @@ export default function App() {
             <div 
               ref={cardRef}
               className={`absolute inset-0 transform-style-3d cursor-grab active:cursor-grabbing origin-left ${!isBookDragging && bookRotation === 0 ? 'animate-hint' : ''}`}
-              onPointerDown={handleBookPointerDown}
-              onPointerMove={handleBookPointerMove}
-              onPointerUp={handleBookPointerUp}
-              onPointerLeave={handleBookPointerUp}
+              onPointerDown={bookRotation >= 180 ? undefined : handleBookPointerDown}
+              onPointerMove={bookRotation >= 180 ? undefined : handleBookPointerMove}
+              onPointerUp={bookRotation >= 180 ? undefined : handleBookPointerUp}
+              onPointerLeave={bookRotation >= 180 ? undefined : handleBookPointerUp}
               style={{
                 transform: `rotateY(-${bookRotation}deg)`,
                 transition: isBookDragging ? 'none' : 'transform 0.8s cubic-bezier(0.25, 0.8, 0.25, 1)',
                 zIndex: 100,
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden',
-                touchAction: bookRotation >= 180 ? 'auto' : 'none'
+                touchAction: bookRotation >= 180 ? 'auto' : 'none',
+                pointerEvents: bookRotation >= 180 ? 'none' : 'auto'
               }}
             >
                {renderCardStack('cover')}
