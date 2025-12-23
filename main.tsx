@@ -14,6 +14,7 @@ export default function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isPortrait, setIsPortrait] = useState(false);
   const [editedContent, setEditedContent] = useState(() => {
     const content = { ...CONTENT };
     if (!content.body || !Array.isArray(content.body)) {
@@ -94,7 +95,7 @@ export default function App() {
         panX: baseCameraPan.current.panX, 
         panY: camera.panY, 
         rotateX: camera.rotateX, 
-        rotateY: baseCameraPan.current.rotateY 
+        rotateY: 0 
       } 
     };
     e.target.setPointerCapture(e.pointerId);
@@ -110,7 +111,7 @@ export default function App() {
       ...prev, 
       panX: baseCameraPan.current.panX + deltaX * 0.5, 
       panY: initialCamera.panY + deltaY * 0.5,
-      rotateY: baseCameraPan.current.rotateY
+      rotateY: 0
     }));
   };
 
@@ -281,23 +282,34 @@ export default function App() {
     }
   }, []);
 
-  const baseCameraPan = React.useRef({ panX: 0, rotateY: 0 });
+  React.useEffect(() => {
+    const checkOrientation = () => {
+      setIsPortrait(window.innerHeight > window.innerWidth);
+    };
+    checkOrientation();
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', checkOrientation);
+    return () => {
+      window.removeEventListener('resize', checkOrientation);
+      window.removeEventListener('orientationchange', checkOrientation);
+    };
+  }, []);
+
+  const baseCameraPan = React.useRef({ panX: 0 });
   
   React.useEffect(() => {
     if (!isSceneDragging && !isBookDragging) {
       const rotationProgress = bookRotation / 180;
-      const targetPanX = rotationProgress * 120;
-      const targetRotateY = rotationProgress * -12;
+      const targetPanX = rotationProgress * 100;
       
       baseCameraPan.current = {
-        panX: targetPanX,
-        rotateY: targetRotateY
+        panX: targetPanX
       };
       
       setCamera(prev => ({
         ...prev,
         panX: baseCameraPan.current.panX,
-        rotateY: baseCameraPan.current.rotateY
+        rotateY: 0
       }));
     }
   }, [bookRotation, isSceneDragging, isBookDragging]);
@@ -336,7 +348,23 @@ export default function App() {
         .animate-hint { animation: hint-nudge 3s ease-in-out infinite; }
       `}</style>
 
-      <div className="scene relative w-full max-w-[450px] h-[600px] min-h-[400px] z-10 items-center justify-center select-none mx-auto flex px-4" style={{ maxWidth: 'min(450px, 90vw)', height: 'min(600px, 80vh)' }}>
+      {isPortrait && (
+        <div className="fixed inset-0 z-[200] bg-[#f0eee6] flex flex-col items-center justify-center p-8 text-center">
+          <div className="max-w-md">
+            <div className="text-6xl mb-6 animate-spin" style={{ animationDuration: '2s', animationIterationCount: 'infinite' }}>📱</div>
+            <h2 className="handwritten text-4xl text-stone-800 mb-4">Please Rotate Your Device</h2>
+            <p className="body-text text-lg text-stone-600 mb-2">This experience works best in landscape mode</p>
+            <p className="body-text text-sm text-stone-500">Rotate your phone sideways to continue</p>
+          </div>
+        </div>
+      )}
+      
+      <div className={`scene relative w-full max-w-[450px] h-[600px] min-h-[400px] z-10 items-center justify-center select-none mx-auto flex px-4 ${isPortrait ? 'opacity-0 pointer-events-none' : ''}`} style={{ 
+        maxWidth: 'min(450px, 90vw)', 
+        height: 'min(600px, 80vh)',
+        transform: 'scale(0.85)',
+        transition: 'transform 0.3s ease-out, opacity 0.3s'
+      }}>
         
         <div className="relative w-full h-full transform-style-3d transition-transform duration-300 ease-out"
            style={{ transform: `translateX(${camera.panX}px) translateY(${camera.panY}px) rotateX(${camera.rotateX}deg) rotateY(${camera.rotateY}deg)` }}
